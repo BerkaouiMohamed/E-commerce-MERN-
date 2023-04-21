@@ -1,31 +1,33 @@
-import React from 'react';
-import { useNavigate, useParams } from "react-router-dom"
+import React, { useState } from 'react';
 import { FaArrowLeft } from 'react-icons/fa';
 import {motion} from 'framer-motion'
-import axios from 'axios';
-import { useEffect, useState  } from 'react';
+import { useEffect  } from 'react';
+import { useDispatch,useSelector } from "react-redux";
+import {listProductDetails} from '../redux/actions/productActions'
+import { useNavigate, useParams } from 'react-router-dom';
+
 
 function ProductDetails() {
+  const [quantity,setQuantity]=useState(1)
+  const handleQuantety=(e)=>setQuantity(e.target.value)
+ const dispatch=useDispatch()
+
   const { id } = useParams();
   const navigate = useNavigate();
-  console.log(id);
+ 
 
-  const [product,setProduct]=useState(null);
-
+const productDetails=useSelector(state=>state.productDetails)
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const { data } = await axios.get(`http://localhost:8000/api/products/${id}`);
-        setProduct(data);
-        console.log(data);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    fetchProduct();
-  }, [id]);
+ 
+    dispatch(listProductDetails(id))
+  }, [dispatch]);
 
-  console.log(product);
+
+  const {loading,error,product}=productDetails
+
+const handleAddtoCart=()=>{
+ navigate(`/cart/${id}?qty=${quantity}`)
+}
 
   const handleBackButtonClick = () => {
     navigate(-1); 
@@ -38,7 +40,7 @@ function ProductDetails() {
     <motion.div  initial={{ opacity: 0,y:100 }}
     animate={{ opacity: 1,y:0 }}
     exit={{ opacity: 0 ,y:-100}}
-    transition={{ duration: 0.8 }} className="h-screen w-screen flex justify-center items-center">
+    transition={{ duration: 0.8 }} className="h-max pt-20 w-screen flex justify-center items-center">
       <div className="w-full max-w-6xl flex flex-col md:flex-row">
       <button
               onClick={handleBackButtonClick}
@@ -98,11 +100,26 @@ function ProductDetails() {
             </p>
             <hr/>
             <p className="text-lg m-2">
+              {  product.countInStock>0?<>
               <span className="font-bold">Count in stock:</span>{" "}
-              {product.countInStock}
+              {product.countInStock}</>:null
+              }
+            </p>
+
+            <hr/>
+            <p className="text-lg m-2">
+            {product.countInStock > 0 ? (
+  <>
+    <span className="font-bold">quantity:</span>{" "}
+    <form>
+      <input value={quantity} onChange={handleQuantety} type="number" />
+      {quantity>product.countInStock? <h1 className='text-red-600 font-bold'>{product.countInStock} Maximum</h1>:null}
+    </form>
+  </>
+) : null}
             </p>
           </div>
-          <button className="bg-yellow-500 text-white px-4 py-2 mt-4 rounded-lg hover:bg-yellow-600">
+          <button onClick={handleAddtoCart} className="bg-yellow-500 text-white px-4 py-2 mt-4 rounded-lg hover:bg-yellow-600">
             Add to Cart
           </button>
         </div>
